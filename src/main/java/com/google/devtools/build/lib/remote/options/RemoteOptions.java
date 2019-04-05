@@ -105,7 +105,7 @@ public final class RemoteOptions extends OptionsBase {
 
   @Option(
       name = "remote_upload_local_results",
-      defaultValue = "true",
+      defaultValue = "false",
       documentationCategory = OptionDocumentationCategory.REMOTE,
       effectTags = {OptionEffectTag.UNKNOWN},
       help = "Whether to upload locally executed action results to the remote cache.")

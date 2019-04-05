@@ -272,6 +272,7 @@ public class RemoteSpawnRunner implements SpawnRunner {
               }
             });
       } catch (IOException e) {
+        // log message here that action was executed locally
         return execLocallyAndUploadOrFail(
             spawn, context, inputMap, actionKey, action, command, uploadLocalResults, e);
       }
