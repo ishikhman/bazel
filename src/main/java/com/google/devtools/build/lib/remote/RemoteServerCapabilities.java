@@ -201,6 +201,7 @@ class RemoteServerCapabilities {
                 digestFunction, execCap.getDigestFunction()));
       }
 
+      // todo(ishikhman)
       // Check updating remote cache is allowed, if we ever need to do that.
       if (remoteOptions.remoteLocalFallback
           && remoteOptions.remoteUploadLocalResults

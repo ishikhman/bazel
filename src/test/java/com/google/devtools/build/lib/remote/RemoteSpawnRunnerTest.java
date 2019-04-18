@@ -81,7 +81,6 @@ import com.google.devtools.build.lib.util.io.FileOutErr;
 import com.google.devtools.build.lib.vfs.DigestHashFunction;
 import com.google.devtools.build.lib.vfs.FileStatus;
 import com.google.devtools.build.lib.vfs.FileSystem;
-import com.google.devtools.build.lib.vfs.FileSystemUtils;
 import com.google.devtools.build.lib.vfs.Path;
 import com.google.devtools.build.lib.vfs.PathFragment;
 import com.google.devtools.build.lib.vfs.inmemoryfs.InMemoryFileSystem;
@@ -147,13 +146,13 @@ public class RemoteSpawnRunnerTest {
     FileSystem fs = new InMemoryFileSystem(new JavaClock(), DigestHashFunction.SHA256);
     execRoot = fs.getPath("/exec/root");
     logDir = fs.getPath("/server-logs");
-    FileSystemUtils.createDirectoryAndParents(execRoot);
+    execRoot.createDirectoryAndParents();
     fakeFileCache = new FakeActionInputFileCache(execRoot);
 
     Path stdout = fs.getPath("/tmp/stdout");
     Path stderr = fs.getPath("/tmp/stderr");
-    FileSystemUtils.createDirectoryAndParents(stdout.getParentDirectory());
-    FileSystemUtils.createDirectoryAndParents(stderr.getParentDirectory());
+    stdout.getParentDirectory().createDirectoryAndParents();
+    stderr.getParentDirectory().createDirectoryAndParents();
     outErr = new FileOutErr(stdout, stderr);
 
     remoteOptions = Options.getDefaults(RemoteOptions.class);
@@ -243,6 +242,31 @@ public class RemoteSpawnRunnerTest {
 
     verify(cache, never()).getCachedActionResult(any(ActionKey.class));
     verifyNoMoreInteractions(cache);
+  }
+
+  @Test
+  public void spawnsShouldNotBeCached_localFallback() throws Exception {
+    // Test that if a spawn is executed locally, due to the local fallback, than its result is not
+    // uploaded to the remote cache.
+
+    remoteOptions.remoteAcceptCached = false;
+    remoteOptions.remoteLocalFallback = true;
+    remoteOptions.remoteUploadLocalResults = true;
+
+    RemoteSpawnRunner runner = newSpawnRunner();
+
+    // Throw an IOException to trigger the local fallback.
+    when(executor.executeRemotely(any(ExecuteRequest.class))).thenThrow(IOException.class);
+
+    Spawn spawn = newSimpleSpawn();
+
+    SpawnExecutionContext policy = new FakeSpawnExecutionContext(spawn);
+
+    runner.exec(spawn, policy);
+
+    verify(localRunner).exec(spawn, policy);
+
+    verify(cache, never()).upload(any(), any(), any(), any(), any(), any());
   }
 
   @Test
